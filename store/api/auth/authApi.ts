@@ -1,5 +1,5 @@
 import { ApiResponseInterface, UserApiResponseInterface } from '@/interfaces';
-import EncryptedStorage from 'react-native-encrypted-storage';
+import * as SecureStore from 'expo-secure-store';
 import { api } from '../api';
 
 export interface LoginBody {
@@ -15,6 +15,7 @@ export interface SignUpBody {
 }
 
 export const authApi = api.injectEndpoints({
+    overrideExisting: true, 
     endpoints: (builder) => ({
         login: builder.mutation<UserApiResponseInterface, LoginBody>({
             query: (credentials) => ({
@@ -25,12 +26,12 @@ export const authApi = api.injectEndpoints({
             transformResponse: async (response: UserApiResponseInterface) => {
                 if (response.data?.token) {
                     const newToken: string = response.data?.token;
-                    await EncryptedStorage.setItem('token', newToken);
+                    await SecureStore.setItemAsync('token', newToken);
                 }
 
                 return response;
             },
-            invalidatesTags: ['user', 'tasks'],
+            invalidatesTags: ['user'],
         }),
 
         signUp: builder.mutation<ApiResponseInterface, SignUpBody>({
@@ -48,19 +49,19 @@ export const authApi = api.injectEndpoints({
             }),
             transformResponse: async (response: ApiResponseInterface) => {
                 if (response?.isSuccess) {
-                    await EncryptedStorage.removeItem('token')
+                    await SecureStore.deleteItemAsync('token')
                 }
 
                 return response;
             },
-            invalidatesTags: ['user', 'tasks'],
+            invalidatesTags: ['user'],
         }),
 
         checkAuth: builder.query<UserApiResponseInterface, void>({
             query: () => ({
                 url: '/auth/check-auth',
             }),
-            providesTags: ['user', 'tasks'],
+            providesTags: ['user'],
         }),
 
     }),

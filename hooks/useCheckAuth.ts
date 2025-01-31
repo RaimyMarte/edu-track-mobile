@@ -1,6 +1,6 @@
 import { useEffect, } from "react";
 import { useCheckAuthQuery } from "@/store/api/auth/authApi";
-import { useAuthStore } from ".";
+import { useAuthStore } from "./useAuthStore";
 
 
 export const useCheckAuth = () => {

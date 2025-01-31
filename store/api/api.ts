@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import EncryptedStorage from "react-native-encrypted-storage";
+import * as SecureStore from 'expo-secure-store';
 
 const apiKey = process.env.EXPO_PUBLIC_API_KEY;
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -7,14 +7,14 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export const api = createApi({
   reducerPath: "api",
-  tagTypes: ['user', 'tasks'],
+  tagTypes: ['user'],
 
   baseQuery: fetchBaseQuery({
     baseUrl: apiUrl,
     prepareHeaders: async (headers) => {
       headers.set('APIKey', `${apiKey}`)
 
-      const token = await EncryptedStorage.getItem('token');
+      const token = await SecureStore.getItemAsync('token');
 
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);

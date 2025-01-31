@@ -1,6 +1,6 @@
 import { checkingCredentials, loginState, logoutState, } from "../store/auth"
-import { useAppDispatch, useAppSelector } from "./"
 import { UserInterface } from "@/interfaces/user/userInterface"
+import { useAppDispatch, useAppSelector } from "./reduxHooks"
 
 export const useAuthStore = () => {
     const { status, user } = useAppSelector(state => state.auth)
