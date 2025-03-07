@@ -27,8 +27,8 @@ export default function Login() {
       label: 'Email',
       placeholder: 'Email',
       disabled: loginLoading,
-      type: 'email',
-      // validation: Yup.string().email("Invalid email").required("Email is required"),
+      type: 'text',
+      validation: Yup.string().required("Username is required"),
     },
     {
       name: 'Password',
@@ -44,7 +44,6 @@ export default function Login() {
 
   const onFormSubmit = async (data: any) => {
     try {
-      console.log(data)
       const response = await login(data);
 
       if (isMutationSuccessResponse(response)) {
