@@ -24,11 +24,7 @@ export const authSlice = createSlice({
       state.status = "not-authenticated";
       state.user = null
     },
-
-    checkingCredentials: (state) => {
-      state.status = "checking";
-    },
   }
 });
 
-export const { loginState, logoutState, checkingCredentials } = authSlice.actions;
+export const { loginState, logoutState } = authSlice.actions;

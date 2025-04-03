@@ -1,17 +1,10 @@
-import { ApiResponseInterface, UserApiResponseInterface } from '@/interfaces';
+import { ApiResponseInterface, UserApiResponseInterface, UserInterface } from '@/interfaces';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../api';
 
 export interface LoginBody {
-    email: string;
-    password: string;
-}
-
-export interface SignUpBody {
-    email: string;
-    name: string;
-    password: string;
-    confirmPassword: string;
+    UserNameOrEmail: string;
+    Password: string;
 }
 
 export const authApi = api.injectEndpoints({
@@ -24,22 +17,17 @@ export const authApi = api.injectEndpoints({
                 body: credentials,
             }),
             transformResponse: async (response: UserApiResponseInterface) => {
-                if (response.data?.token) {
+                if (response.data?.token && response.data?.user) {
                     const newToken: string = response.data?.token;
                     await SecureStore.setItemAsync('token', newToken);
+
+                    const newUser: UserInterface = response.data?.user;
+                    await SecureStore.setItemAsync("user", JSON.stringify(newUser));
                 }
 
                 return response;
             },
             invalidatesTags: ['user'],
-        }),
-
-        signUp: builder.mutation<ApiResponseInterface, SignUpBody>({
-            query: (body) => ({
-                url: '/auth/sign-up',
-                method: 'POST',
-                body,
-            }),
         }),
 
         logout: builder.mutation<ApiResponseInterface, void>({
@@ -50,26 +38,17 @@ export const authApi = api.injectEndpoints({
             transformResponse: async (response: ApiResponseInterface) => {
                 if (response?.isSuccess) {
                     await SecureStore.deleteItemAsync('token')
+                    await SecureStore.deleteItemAsync('user')
                 }
 
                 return response;
             },
             invalidatesTags: ['user'],
         }),
-
-        checkAuth: builder.query<UserApiResponseInterface, void>({
-            query: () => ({
-                url: '/auth/check-auth',
-            }),
-            providesTags: ['user'],
-        }),
-
     }),
 });
 
 export const {
     useLoginMutation,
-    useSignUpMutation,
     useLogoutMutation,
-    useCheckAuthQuery,
 } = authApi;

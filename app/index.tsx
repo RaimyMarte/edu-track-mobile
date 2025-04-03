@@ -1,48 +1,48 @@
-import { FormikForm } from '@/components/form/FormikForm'
-import { useAuthStore } from '@/hooks/useAuthStore'
-import { useColorScheme } from '@/hooks/useColorScheme.web'
-import { useLoginMutation } from '@/store/api/auth/authApi'
-import { isMutationSuccessResponse } from '@/utils'
-import { useRouter, useSegments } from 'expo-router'
-import { useEffect, useState } from 'react'
-import { StatusBar, StyleSheet, View } from 'react-native'
-import { Text, useTheme } from 'react-native-paper'
+import { FormikForm } from "@/components/form/FormikForm";
+import { Loading } from "@/components/loading/Loading";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { useCheckAuth } from "@/hooks/useCheckAuth";
+import { useColorScheme } from "@/hooks/useColorScheme.web";
+import { LoginBody, useLoginMutation } from "@/store/api/auth/authApi";
+import { isMutationSuccessResponse } from "@/utils";
+import { useState } from "react";
+import { StatusBar, StyleSheet, View } from "react-native";
+import { Text, useTheme } from "react-native-paper";
 import * as Yup from "yup";
 
-export default function Login() {
+export default function LoginPage() {
   const { colors } = useTheme();
   const colorScheme = useColorScheme();
 
-  const { status, handleLoginState, handleLogoutState } = useAuthStore();
-  const segments = useSegments();
-  const router = useRouter();
+  const { handleLoginState, handleLogoutState, status } = useAuthStore();
 
-  const [error, setError] = useState('');
+  useCheckAuth();
+
+  const [error, setError] = useState("");
   const [login, { isLoading: loginLoading }] = useLoginMutation();
 
   const formFields = [
     {
-      name: 'UserName',
-      initialValue: '',
-      label: 'Email',
-      placeholder: 'Email',
+      name: "UserNameOrEmail",
+      initialValue: "",
+      label: "Username or Email",
+      placeholder: "Username or Email",
       disabled: loginLoading,
-      type: 'text',
-      validation: Yup.string().required("Username is required"),
+      type: "text",
+      validation: Yup.string().required("Username or Email is required"),
     },
     {
-      name: 'Password',
-      initialValue: '',
-      label: 'Password',
-      placeholder: 'Password',
+      name: "Password",
+      initialValue: "",
+      label: "Password",
+      placeholder: "Password",
       disabled: loginLoading,
-      type: 'password',
+      type: "password",
       validation: Yup.string().required("Password is required"),
     },
-  ]
+  ];
 
-
-  const onFormSubmit = async (data: any) => {
+  const onFormSubmit = async (data: LoginBody) => {
     try {
       const response = await login(data);
 
@@ -57,37 +57,42 @@ export default function Login() {
 
         handleLoginState(respData?.data?.user);
 
-        setError('');
+        setError("");
       }
     } catch (error) {
       setError(`Ha ocurrido un error: ${error}`);
     }
   };
 
-  useEffect(() => {
-    const inAuthGroup = segments[0] === '(protected)';
-    if (status === 'authenticated') {
-      router.replace('/(protected)');
-    } else if (status === 'unauthenticated' && inAuthGroup) {
-      router.replace('/');
-    }
-  }, [status]);
+  if (status === "checking") {
+    return <Loading message="Checking authentication..." />;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={colorScheme === 'light' ? 'light-content' : 'dark-content'} />
-      <Text style={[styles.title, { color: 'black' }]}>Login</Text>
-
-      <FormikForm
-        fields={formFields}
-        buttonLabel="Login"
-        onFormSubmit={onFormSubmit}
+      <StatusBar
+        barStyle={colorScheme === "light" ? "light-content" : "dark-content"}
       />
 
-      {error ? (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      ) : null}
+      {loginLoading ? (
+        <Loading message="Logging in..." />
+      ) : (
+        <>
+          <Text style={[styles.title, { color: "black" }]}>Login</Text>
 
+          <FormikForm
+            fields={formFields}
+            buttonLabel="Login"
+            onFormSubmit={onFormSubmit}
+          />
+
+          {error && (
+            <Text style={[styles.errorText, { color: colors.error }]}>
+              {error}
+            </Text>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -96,12 +101,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 24,
     marginBottom: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   button: {
     marginTop: 20,
@@ -109,6 +114,6 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 10,
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

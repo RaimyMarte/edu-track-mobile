@@ -1,25 +1,43 @@
-import { useEffect, } from "react";
-import { useCheckAuthQuery } from "@/store/api/auth/authApi";
+import { useRouter, useSegments } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect } from "react";
 import { useAuthStore } from "./useAuthStore";
 
-
 export const useCheckAuth = () => {
-    const {
-        handleLoginState,
-        handleLogoutState,
-    } = useAuthStore()
+  const segments = useSegments();
+  const router = useRouter();
 
-    const { data: userData, isLoading: checkAuthLoading, isUninitialized: checkAuthIsUninitialized } = useCheckAuthQuery()
+  const { status, handleLoginState, handleLogoutState } = useAuthStore();
 
-    useEffect(() => {
-        if (!checkAuthLoading && !checkAuthIsUninitialized) {
-            if (userData?.isSuccess) {
-                // User is authenticated
-                handleLoginState(userData?.data?.user);
-            } else {
-                // User is not authenticated
-                handleLogoutState();
-            }
-        }
-    }, [userData, checkAuthLoading, checkAuthIsUninitialized]);
-}
+  const checkAuth = async () => {
+    try {
+      const userStored = await SecureStore.getItemAsync("user");
+
+      if (userStored) {
+        const user = JSON.parse(userStored);
+        handleLoginState(user);
+      } else {
+        handleLogoutState();
+      }
+    } catch (error) {
+      console.error("Error reading user from SecureStore:", error);
+      handleLogoutState();
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (status === "checking") return;
+
+    const inAuthGroup = segments[0] === "(protected)";
+
+    if (status === "authenticated") {
+      router.replace("/(protected)");
+    } else if (status === "unauthenticated" && inAuthGroup) {
+      router.replace("/");
+    }
+  }, [status]);
+};
